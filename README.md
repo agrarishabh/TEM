@@ -1,30 +1,50 @@
 # 📊 Track Every Moment
 
-**Track Every Moment** is a full-stack productivity app designed to help users effortlessly track their daily tasks and work logs. It provides a clear visualization of time investment and task progress, helping users build better habits and improve time management.
+**Track Every Moment** is a full-stack productivity tracker that helps users organize tasks, log work sessions, and visualize how they spend their time. The app features a clean, responsive UI, powerful insights, and secure authentication — all designed to improve daily focus and time management.
 
-## ✨ Features
-
-- ✅ Create and manage tasks with completion percentage
-- ⏱ Log work sessions with start/end time and duration
-- 📈 View daily performance summary (time invested per day)
-- 📊 Interactive 7-day graph of completed tasks and durations
-- 🗑 Delete old logs and tasks automatically after 7 days
-- 🔐 Authenticated user access with jwt token and bcrypt
-- 🔁 Responsive UI with Tailwind CSS and Recharts
+🔗 **Live Demo:** [https://tem-33ck.vercel.app](https://tem-33ck.vercel.app)
 
 ---
 
-## 🖥 Tech Stack
+## ✨ Features
 
-**Frontend:**
-- React.js
-- Tailwind CSS
-- Lucide Icons
-- Recharts
-- Day.js
+- ✅ **Task Management:** Create, update, and delete tasks with a completion percentage
+- ⏱ **Work Logging:** Record start and end times with automatic duration calculation
+- 📆 **Daily Performance Summary:** View your productivity for each day
+- 📊 **Weekly Insights:** Interactive graph showing 7-day history of task durations
+- 🗑 **Auto Cleanup:** Logs and tasks older than 7 days are deleted automatically
+- 🔐 **Authentication:** Secure login system using JWT and bcrypt
+- 💡 **Responsive Design:** Works well on mobile and desktop using Tailwind CSS
 
-**Backend:**
-- Node.js
-- Express.js
-- MongoDB with Mongoose
-- User Authentication with jwt token
+---
+
+## 🖥️ Tech Stack
+
+### 💻 Frontend
+- **React.js** – Component-based UI development
+- **Tailwind CSS** – Utility-first CSS framework for styling
+- **Lucide Icons** – Clean, modern icon set
+- **Recharts** – Data visualization for performance graphs
+- **Day.js** – Lightweight JavaScript date utility
+
+### 🔧 Backend
+- **Node.js** – JavaScript runtime environment
+- **Express.js** – Web framework for handling routes and APIs
+- **MongoDB + Mongoose** – NoSQL database with schema modeling
+- **JWT + bcrypt** – Token-based authentication and secure password hashing
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js and npm
+- MongoDB Atlas or local MongoDB instance
+
+### Installation
+
+1. **Clone the repository:**
+
+```bash
+git clone https://github.com/agrarishabh/TEM.git
+cd TEM
