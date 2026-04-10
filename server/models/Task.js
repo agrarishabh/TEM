@@ -9,7 +9,6 @@ const taskSchema = new mongoose.Schema({
   taskId: {
     type: String,
     required: true,
-    unique: true,
   },
   complete_percentage: {
     type: Number,
@@ -23,11 +22,14 @@ const taskSchema = new mongoose.Schema({
   },
   time: {
     type: Date,
-    required: true, // make false if optional
+    required: true,
   },
 }, {
-  timestamps: true, // includes createdAt and updatedAt automatically
+  timestamps: true,
 });
+
+// Compound index: taskId is unique per user, not globally
+taskSchema.index({ user: 1, taskId: 1 }, { unique: true });
 
 const Task = mongoose.model('Task', taskSchema);
 export default Task;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, X, Trash } from 'lucide-react';
+import { Plus, X, Trash2, Clock, Briefcase, FileText, Timer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 
@@ -19,32 +19,21 @@ const WorkLogPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     fetch(`${URL}/api/done`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
           const todayEntries = data
             .filter(entry => dayjs(entry.date).isSame(currentDate, 'day'))
-            .sort((a, b) => {
-              return dayjs(`${a.date} ${a.startTime}`).diff(dayjs(`${b.date} ${b.startTime}`));
-            });
-
+            .sort((a, b) => dayjs(`${a.date} ${a.startTime}`).diff(dayjs(`${b.date} ${b.startTime}`)));
           setEntries(todayEntries);
         } else {
-          console.error('Expected an array, got:', data);
           setEntries([]);
         }
       })
-      .catch(err => {
-        console.error('Failed to fetch entries:', err);
-        setEntries([]);
-      });
+      .catch(() => setEntries([]));
   }, [URL]);
-
-
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -63,7 +52,6 @@ const WorkLogPage = () => {
     };
 
     const token = localStorage.getItem('token');
-
     const res = await fetch(`${URL}/api/done`, {
       method: 'POST',
       headers: {
@@ -94,17 +82,17 @@ const WorkLogPage = () => {
   };
 
   const calculateDuration = (start, end) => {
-    const startTime = dayjs(`${currentDate} ${start}`);
-    const endTime = dayjs(`${currentDate} ${end}`);
-    if (!startTime.isValid() || !endTime.isValid() || endTime.isBefore(startTime)) return null;
-    const diff = endTime.diff(startTime, 'minute');
+    const s = dayjs(`${currentDate} ${start}`);
+    const e = dayjs(`${currentDate} ${end}`);
+    if (!s.isValid() || !e.isValid() || e.isBefore(s)) return null;
+    const diff = e.diff(s, 'minute');
     const hours = Math.floor(diff / 60);
     const minutes = diff % 60;
     return `${hours}h ${minutes}m`;
   };
 
   const formatTime = time => dayjs(`${currentDate} ${time}`).format('hh:mm A');
-  const formatDate = date => dayjs(date).format('DD/MM/YYYY');
+
   const handleDelete = async (id) => {
     const token = localStorage.getItem('token');
     const confirmDelete = confirm("Are you sure you want to delete this entry?");
@@ -113,11 +101,8 @@ const WorkLogPage = () => {
     try {
       const res = await fetch(`${URL}/api/done/${id}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       if (res.ok) {
         setEntries(entries.filter(entry => entry._id !== id));
         toast.success('Entry deleted');
@@ -125,99 +110,321 @@ const WorkLogPage = () => {
         const data = await res.json();
         toast.error(data.message || 'Failed to delete');
       }
-    } catch (err) {
+    } catch {
       toast.error('Error deleting entry');
     }
   };
 
+  // Calculate total duration
+  const totalMinutes = entries.reduce((acc, entry) => {
+    const parts = entry.duration.split(' ');
+    return acc + (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+  }, 0);
+  const totalHours = Math.floor(totalMinutes / 60);
+  const totalMins = totalMinutes % 60;
 
   return (
-    <div className="max-w-5xl mx-auto mt-24 px-4">
-      <div className="flex justify-between mb-4 items-center">
-        <h1 className="text-xl font-bold">{formatDate(currentDate)}</h1>
-        <button onClick={() => setShowForm(true)} className="flex items-center bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">
-          <Plus size={20} /> Add Work
+    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 20px 60px' }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '28px',
+      }}>
+        <div>
+          <h1 style={{
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: '1.6rem',
+            fontWeight: 800,
+            color: '#f1f5f9',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+          }}>
+            <FileText size={24} style={{ color: '#7c3aed' }} />
+            Work Log
+          </h1>
+          <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '4px' }}>
+            {dayjs(currentDate).format('dddd, D MMMM YYYY')}
+          </p>
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="btn-primary"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 22px',
+            background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+          }}
+        >
+          <Plus size={18} /> Log Work
         </button>
       </div>
 
+      {/* Summary Stats */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+        gap: '14px',
+        marginBottom: '28px',
+      }}>
+        <div className="glass-card" style={{ padding: '18px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>Entries</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.5rem', fontWeight: 800, color: '#00d4ff' }}>{entries.length}</div>
+        </div>
+        <div className="glass-card" style={{ padding: '18px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>Total Time</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.5rem', fontWeight: 800, color: '#7c3aed' }}>{totalHours}h {totalMins}m</div>
+        </div>
+        <div className="glass-card" style={{ padding: '18px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>Task Entries</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.5rem', fontWeight: 800, color: '#10b981' }}>{entries.filter(e => e.workType === 'task').length}</div>
+        </div>
+      </div>
+
+      {/* Add Work Form Modal */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-gray-100 p-4 rounded mb-6 space-y-4 text-black relative">
-          {/* ❌ Close Button */}
-          <X
-            onClick={() => setShowForm(false)}
-            className="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-red-600"
-            size={20}
-          />
-          <p>Date: <strong>{currentDate}</strong></p>
-          <div className="flex gap-4">
-            <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} required className="border p-2 rounded w-full" />
-            <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} required className="border p-2 rounded w-full" />
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 150,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'fadeIn 0.2s ease-out',
+        }}>
+          <div onClick={() => setShowForm(false)} style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(6px)',
+          }} />
+          <div style={{
+            position: 'relative',
+            width: '440px',
+            maxWidth: '90vw',
+            background: 'rgba(15, 31, 53, 0.92)',
+            backdropFilter: 'blur(30px)',
+            border: '1px solid rgba(124, 58, 237, 0.15)',
+            borderRadius: '20px',
+            padding: '32px',
+            animation: 'scaleIn 0.3s ease-out',
+            boxShadow: '0 0 60px rgba(124, 58, 237, 0.1)',
+          }}>
+            <button onClick={() => { setShowForm(false); resetForm(); }} style={{
+              position: 'absolute', top: '14px', right: '14px',
+              background: 'rgba(148, 163, 184, 0.1)', border: 'none',
+              borderRadius: '50%', width: '32px', height: '32px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+            }}>
+              <X size={16} color="#94a3b8" />
+            </button>
+
+            <h2 style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: '1.3rem',
+              fontWeight: 700,
+              marginBottom: '6px',
+              background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>Log Work</h2>
+            <p style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '24px' }}>
+              Date: {dayjs(currentDate).format('D MMMM YYYY')}
+            </p>
+
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Time inputs */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500, marginBottom: '6px', display: 'block' }}>Start Time</label>
+                  <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} required className="input-glass" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500, marginBottom: '6px', display: 'block' }}>End Time</label>
+                  <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} required className="input-glass" />
+                </div>
+              </div>
+
+              {/* Work Type Toggle */}
+              <div>
+                <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500, marginBottom: '8px', display: 'block' }}>Work Type</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {['task', 'other'].map(type => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setWorkType(type)}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        borderRadius: '10px',
+                        border: `1px solid ${workType === type ? (type === 'task' ? 'rgba(0, 212, 255, 0.4)' : 'rgba(124, 58, 237, 0.4)') : 'rgba(148, 163, 184, 0.15)'}`,
+                        background: workType === type ? (type === 'task' ? 'rgba(0, 212, 255, 0.08)' : 'rgba(124, 58, 237, 0.08)') : 'transparent',
+                        color: workType === type ? (type === 'task' ? '#00d4ff' : '#7c3aed') : '#94a3b8',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 250ms ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      {type === 'task' ? <Briefcase size={14} /> : <FileText size={14} />}
+                      {type === 'task' ? 'Task' : 'Other'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Conditional fields */}
+              {workType === 'task' ? (
+                <>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500, marginBottom: '6px', display: 'block' }}>Task ID</label>
+                    <input type="text" placeholder="Enter task ID" value={taskId} onChange={e => setTaskId(e.target.value)} required className="input-glass" />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500, marginBottom: '6px', display: 'block' }}>Completion %</label>
+                    <input type="number" placeholder="0-100" value={completion} onChange={e => setCompletion(e.target.value)} min={0} max={100} required className="input-glass" />
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500, marginBottom: '6px', display: 'block' }}>Work Details</label>
+                  <textarea
+                    placeholder="Describe what you worked on"
+                    value={customDetails}
+                    onChange={e => setCustomDetails(e.target.value)}
+                    required
+                    className="input-glass"
+                    style={{ minHeight: '80px', resize: 'vertical' }}
+                  />
+                </div>
+              )}
+
+              <button type="submit" className="btn-primary" style={{
+                width: '100%', padding: '12px', marginTop: '4px',
+                background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+              }}>
+                Save Entry
+              </button>
+            </form>
           </div>
-
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2">
-              <input type="radio" value="task" checked={workType === 'task'} onChange={() => setWorkType('task')} />
-              Task
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" value="other" checked={workType === 'other'} onChange={() => setWorkType('other')} />
-              Other
-            </label>
-          </div>
-
-          {workType === 'task' ? (
-            <>
-              <input type="text" placeholder="Task ID" value={taskId} onChange={e => setTaskId(e.target.value)} required className="w-full border p-2 rounded" />
-              <input type="number" placeholder="Completion %" value={completion} onChange={e => setCompletion(e.target.value)} min={0} max={100} required className="w-full border p-2 rounded" />
-            </>
-          ) : (
-            <textarea placeholder="Work Details" value={customDetails} onChange={e => setCustomDetails(e.target.value)} required className="w-full border p-2 rounded" />
-          )}
-
-          <button type="submit" className="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded">
-            Save
-          </button>
-        </form>
+        </div>
       )}
 
-      <table className="w-full bg-[#0B1418] mb-10 shadow rounded">
-        <thead className="bg-[#132026]">
-          <tr className="text-center">
-            <th className="px-4 py-2">Start Time 🕒</th>
-            <th className="px-4 py-2">End Time 🕒</th>
-            <th className="px-4 py-2">Duration</th>
-            <th className="px-4 py-2">Work Details</th>
-            <th className="px-4 py-3 text-center">Delete</th>
-          </tr>
-        </thead>
-        <tbody>
+      {/* Work Log Entries */}
+      {entries.length === 0 ? (
+        <div className="glass-card" style={{
+          padding: '60px 24px',
+          textAlign: 'center',
+          animation: 'fadeInUp 0.5s ease-out',
+        }}>
+          <FileText size={48} style={{ color: '#1e4060', margin: '0 auto 16px' }} />
+          <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.2rem', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>
+            No work logged today
+          </h3>
+          <p style={{ color: '#64748b', fontSize: '0.85rem' }}>
+            Click "Log Work" to record your first activity
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {entries.map((entry, idx) => (
-            <tr key={entry._id || idx} className="border-t text-center">
-              <td className="px-4 py-2">🕒 {formatTime(entry.startTime)}</td>
-              <td className="px-4 py-2">🕒 {formatTime(entry.endTime)}</td>
-              <td className="px-4 py-2">{entry.duration}</td>
-              <td
-                className={`px-4 py-2 ${entry.workType === 'task' ? 'text-red-500' : 'text-white'
-                  }`}
+            <div
+              key={entry._id || idx}
+              className="glass-card"
+              style={{
+                padding: '20px 24px',
+                animation: `fadeInUp ${0.2 + idx * 0.08}s ease-out`,
+                display: 'grid',
+                gridTemplateColumns: '1fr auto',
+                gap: '16px',
+                alignItems: 'center',
+              }}
+            >
+              <div>
+                {/* Time row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock size={14} style={{ color: '#00d4ff' }} />
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f1f5f9' }}>
+                      {formatTime(entry.startTime)}
+                    </span>
+                  </div>
+                  <span style={{ color: '#64748b', fontSize: '0.8rem' }}>→</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock size={14} style={{ color: '#7c3aed' }} />
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f1f5f9' }}>
+                      {formatTime(entry.endTime)}
+                    </span>
+                  </div>
+                  {/* Duration badge */}
+                  <span style={{
+                    padding: '3px 10px',
+                    borderRadius: '50px',
+                    background: 'rgba(0, 212, 255, 0.08)',
+                    border: '1px solid rgba(0, 212, 255, 0.15)',
+                    color: '#00d4ff',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}>
+                    <Timer size={10} /> {entry.duration}
+                  </span>
+                </div>
+
+                {/* Work details with type badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    background: entry.workType === 'task' ? 'rgba(0, 212, 255, 0.1)' : 'rgba(124, 58, 237, 0.1)',
+                    color: entry.workType === 'task' ? '#00d4ff' : '#7c3aed',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}>
+                    {entry.workType}
+                  </span>
+                  <span style={{
+                    fontSize: '0.9rem',
+                    color: '#94a3b8',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {entry.workDetails}
+                  </span>
+                </div>
+              </div>
+
+              {/* Delete */}
+              <button
+                onClick={() => handleDelete(entry._id)}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.15)',
+                  borderRadius: '10px',
+                  padding: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 250ms ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.15)'; }}
+                title="Delete entry"
               >
-                {entry.workDetails}
-              </td>
-
-              {/* 🗑️ Delete Button */}
-              <td className="px-4 py-2">
-                <button
-                  onClick={() => handleDelete(entry._id)}
-                  className="text-gray-400 hover:text-red-600"
-                  title="Delete"
-                >
-                  <Trash size={18} />
-                </button>
-              </td>
-            </tr>
+                <Trash2 size={16} color="#ef4444" />
+              </button>
+            </div>
           ))}
-        </tbody>
-
-      </table>
+        </div>
+      )}
     </div>
   );
 };

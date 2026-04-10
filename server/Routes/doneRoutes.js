@@ -23,7 +23,7 @@ router.post('/', verifyUser, async (req, res) => {
         let workDetails = '';
 
         if (workType === 'task') {
-            const task = await Task.findOne({ taskId });
+            const task = await Task.findOne({ taskId, user: req.user.id });
             if (!task) return res.status(404).json({ message: 'Task not found' });
 
             task.complete_percentage = completion;
